@@ -11,7 +11,7 @@ def copy(templatefiles, path)
     templatefiles.each { |template|
         filename = template.gsub('#{PROJNAME}', @name)
         src = File.join(@template, path, template)
-        dst = File.join(@name, path, filename)
+        dst = File.join(@name, path.gsub('#{PROJNAME}', @name), filename)
 
         if File.directory?(src)
             FileUtils.mkdir(dst)
@@ -38,7 +38,6 @@ fail "need a project name" unless ARGV[0]
 
 # this probably won't work on Windows, but then again, what does?
 @templatesdir = File.join(ENV['HOME'], '.templates')
-#@templatesdir = '.templates/'
 
 @template = File.join(@templatesdir, @lang)
 
