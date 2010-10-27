@@ -1,0 +1,66 @@
+#!/usr/bin/env ruby
+
+require 'fileutils'
+
+def fail(msg)
+    puts "#{$0}: #{msg}"
+    exit 1
+end
+
+def copy(templatefiles, path)
+    templatefiles.each { |template|
+        filename = template.gsub('#{PROJNAME}', @name)
+        src = File.join(@template, path, template)
+        dst = File.join(@name, path, filename)
+
+        if File.directory?(src)
+            FileUtils.mkdir(dst)
+
+            # recursively copy directories
+            subdir = Dir.entries(src)  - [".", ".."]
+            copy(subdir, File.join(path, template))
+        else
+            content = File.new(src).readlines.join.gsub('#{PROJNAME}', @name)
+            File.open(dst, "w") { |file|
+                file.syswrite(content)
+            }
+            
+        end
+    }
+end
+
+
+
+fail "need a project name" unless ARGV[0]
+
+@name = ARGV[0]
+@lang = ARGV[1] || "default"
+
+# this probably won't work on Windows, but then again, what does?
+@templatesdir = File.join(ENV['HOME'], '.templates')
+#@templatesdir = '.templates/'
+
+@template = File.join(@templatesdir, @lang)
+
+unless File.exists?(@templatesdir)
+    fail "no template directory!"
+end
+
+unless File.exists?(@template)
+    fail "template for `#{@lang}' doesn't exist"
+end
+
+if File.exists?(@name)
+    fail "directory `#{@name}' already exists"
+end
+
+templatefiles = Dir.entries(@template) - [".", ".."]
+
+puts "\tcreating project: #{@name}"
+FileUtils.mkdir(@name)
+
+# do the actual copying here
+copy(templatefiles, "")
+
+# run git init in dir
+puts `cd #{@name} && git init`
